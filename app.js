@@ -1,11 +1,182 @@
 const express = require("express");
 
 const app = express();
+const { open } = require("sqlite");
+const sqlite3 = require("sqlite3");
+const format = require("date-fns/format");
+const isValid = require("date-fns/isValid");
+const toDate = require("date-fns/toDate");
+const path = require("path");
+const dbPath = path.join(__dirname, "todoApplication.db");
+let db;
 
-app.get("/", (request, response) => {
-  response.send("App is started");
-});
+const initializeDbAndServer = async () => {
+  try {
+    db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database,
+    });
 
-app.listen(3000, () => {
-  console.log("app started listening at http://localhost:3000");
-});
+    app.listen(3000, () => {
+      console.log("app started listening at http://localhost:3000");
+    });
+  } catch (error) {
+    console.log(error.message);
+    process.exit(1);
+  }
+};
+
+initializeDbAndServer();
+
+const checkRequestsQueries = async (request, response, next) => {
+  const { search_q, category, priority, status, date } = request.query;
+  const { todoId } = request.params;
+
+  if (category !== undefined) {
+    const categoryArray = ["WORK", "HOME", "LEARNING"];
+    const isCategoryInArray = categoryArray.includes(category);
+
+    if (isCategoryInArray) {
+      request.category = category;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Category");
+    }
+  }
+
+  if (priority !== undefined) {
+    const priorityArray = ["HIGH", "MEDIUM", "LOW"];
+    const isPriorityInArray = priority.includes(priority);
+
+    if (isPriorityInArray) {
+      request.priority = priority;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Priority");
+    }
+  }
+
+  if (status !== undefined) {
+    const statusArray = ["TO DO", "IN PROGRESS", "DONE"];
+    const isStatusInArray = statusArray.includes(status);
+
+    if (isStatusInArray) {
+      request.status = status;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Status");
+    }
+  }
+
+  if (date !== undefined) {
+    try {
+      const myData = new Date(date);
+
+      const formattedDate = format(myData, "yyyy-MM-dd");
+      console.log(formattedDate, "f");
+
+      const result = toDate(
+        new Date(
+          `${myDate.getFullYear()}-${myDate.getMonth() + 1}-${myDate.getDate()}`
+        )
+      );
+
+      console.log(result, "s");
+      console.log(new Date(), "new");
+
+      const isValidDate = await isValid(result);
+      console.log(isValidDate, "V");
+
+      if (isValidDate) {
+        request.date = formattedDate;
+      } else {
+        response.status(400);
+        response.send("Invalid Due Date");
+      }
+    } catch (error) {
+      response.status(400);
+      response.send("Invalid Due Date");
+    }
+  }
+
+  request.todoId = todoId;
+  request.search_q = search_q;
+
+  next();
+};
+
+const checkRequestsBody = async (request, response, next) => {
+  const { search_q, category, priority, status, date } = request.body;
+  const { todoId } = request.params;
+
+  if (category !== undefined) {
+    const categoryArray = ["WORK", "HOME", "LEARNING"];
+    const isCategoryInArray = categoryArray.includes(category);
+
+    if (isCategoryInArray) {
+      request.category = category;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Category");
+    }
+  }
+
+  if (priority !== undefined) {
+    const priorityArray = ["HIGH", "MEDIUM", "LOW"];
+    const isPriorityInArray = priority.includes(priority);
+
+    if (isPriorityInArray) {
+      request.priority = priority;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Priority");
+    }
+  }
+
+  if (status !== undefined) {
+    const statusArray = ["TO DO", "IN PROGRESS", "DONE"];
+    const isStatusInArray = statusArray.includes(status);
+
+    if (isStatusInArray) {
+      request.status = status;
+    } else {
+      response.status(400);
+      response.send("Invalid todo Status");
+    }
+  }
+
+  if (date !== undefined) {
+    try {
+      const myData = new Date(date);
+
+      const formattedDate = format(myData, "yyyy-MM-dd");
+      console.log(formattedDate, "f");
+
+      const result = toDate(
+        new Date(
+          `${myDate.getFullYear()}-${myDate.getMonth() + 1}-${myDate.getDate()}`
+        )
+      );
+
+      console.log(result, "s");
+      console.log(new Date(), "new");
+
+      const isValidDate = await isValid(result);
+      console.log(isValidDate, "V");
+
+      if (isValidDate) {
+        request.date = formattedDate;
+      } else {
+        response.status(400);
+        response.send("Invalid Due Date");
+      }
+    } catch (error) {
+      response.status(400);
+      response.send("Invalid Due Date");
+    }
+  }
+
+  request.todoId = todoId;
+  request.search_q = search_q;
+  next();
+};
