@@ -180,3 +180,17 @@ const checkRequestsBody = async (request, response, next) => {
   request.search_q = search_q;
   next();
 };
+
+//GET Todo API-1
+app.get("/todos/", checkRequestsQueries, async (request, response) => {
+  const { status = "", search_q = "", priority = "", category = "" } = request;
+  console.log(status, search_q, priority, category);
+
+  const getTodosQuery = `SELECT 
+                                id, todo,priority,status,category,due_date as dueDate 
+                           FROM todo 
+                           WHERE todo LIKE '%${search_q}%' AND priority LIKE '%${priority}%' AND category LIKE '%${category}%' AND status LIKE '%${status}%'`;
+
+  const todosArray = await db.all(getTodosQuery);
+  response.send(todosArray);
+});
