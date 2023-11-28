@@ -181,7 +181,7 @@ const checkRequestsBody = async (request, response, next) => {
   next();
 };
 
-//GET Todo API-1
+//GET Todos API-1
 app.get("/todos/", checkRequestsQueries, async (request, response) => {
   const { status = "", search_q = "", priority = "", category = "" } = request;
   console.log(status, search_q, priority, category);
@@ -193,4 +193,13 @@ app.get("/todos/", checkRequestsQueries, async (request, response) => {
 
   const todosArray = await db.all(getTodosQuery);
   response.send(todosArray);
+});
+
+//GET Todo API-2
+app.get("/todos/:todoId/", checkRequestsQueries, async (request, response) => {
+  const { todoId } = request;
+
+  const getTodoQuery = `SELECT * FROM todo WHERE id='${todoId}'`;
+  const todoDetails = await db.get(getTodoQuery);
+  response.send(todoDetails);
 });

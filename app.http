@@ -11,4 +11,7 @@ GET http://localhost:3000/todos/?category=WORK&status=DONE
 GET http://localhost:3000/todos/?category=HOME
 ###
 GET http://localhost:3000/todos/?category=LEARNING&priority=HIGH
+
+
 ###
+GET http://localhost:3000/todos/5
