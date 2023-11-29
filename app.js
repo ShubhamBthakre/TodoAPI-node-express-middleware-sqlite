@@ -296,3 +296,17 @@ app.put("/todos/:todoId/", checkRequestsBody, async (request, response) => {
       break;
   }
 });
+
+// Delete Todo API-6
+
+app.delete("/todos/:todoId", async (request, response) => {
+  const { todoId } = request.params;
+
+  const deleteTodoQuery = `DELETE FROM todo WHERE id='${todoId}'`;
+
+  const deleteTodoResult = await db.run(deleteTodoQuery);
+
+  console.log(deleteTodoResult);
+
+  response.send("Delete todo from Todo");
+});
