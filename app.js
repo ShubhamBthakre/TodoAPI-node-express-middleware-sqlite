@@ -210,7 +210,6 @@ app.get("/todos/:todoId/", checkRequestsQueries, async (request, response) => {
 });
 
 //GET Todo with specific date API-3
-
 app.get("/agenda/", checkRequestsQueries, async (request, response) => {
   const { date } = request;
   console.log(date, "a");
@@ -259,4 +258,41 @@ app.post("/todos/", checkRequestsBody, async (request, response) => {
   response.send("todo created successfully");
 });
 
-//
+//Update Todo API-5
+app.put("/todos/:todoId/", checkRequestsBody, async (request, response) => {
+  const { todoId, todo, status, priority, category, dueDate } = request;
+
+  let updateTodoQuery;
+
+  switch (true) {
+    case status !== undefined:
+      updateTodoQuery = `UPDATE todo SET status='${status}' WHERE id='${todoId}'`;
+      await db.run(updateTodoQuery);
+      response.send("status updated successfully");
+      break;
+
+    case todo !== undefined:
+      updateTodoQuery = `UPDATE todo SET todo='${todo}' WHERE id='${todoId}'`;
+      await db.run(updateTodoQuery);
+      response.send("todo updated successfully");
+      break;
+
+    case priority !== undefined:
+      updateTodoQuery = `UPDATE todo SET priority='${priority}' WHERE id='${todoId}'`;
+      await db.run(updateTodoQuery);
+      response.send("priority updated successfully");
+      break;
+
+    case category !== undefined:
+      updateTodoQuery = `UPDATE todo SET category='${category}' WHERE id='${todoId}'`;
+      await db.run(updateTodoQuery);
+      response.send("category updated successfully");
+      break;
+
+    case dueDate !== undefined:
+      updateTodoQuery = `UPDATE todo SET due_date='${dueDate}' WHERE id='${todoId}'`;
+      await db.run(updateTodoQuery);
+      response.send("Dua Date updated successfully");
+      break;
+  }
+});
