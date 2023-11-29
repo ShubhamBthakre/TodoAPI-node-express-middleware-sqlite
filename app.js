@@ -1,6 +1,7 @@
 const express = require("express");
 
 const app = express();
+app.use(express.json());
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const format = require("date-fns/format");
@@ -70,32 +71,31 @@ const checkRequestsQueries = async (request, response, next) => {
 
   if (date !== undefined) {
     try {
-      const myData = new Date(date);
+      const myDate = new Date(date);
 
-      const formattedDate = format(myData, "yyyy-MM-dd");
-      console.log(formattedDate, "f");
-
+      const formatedDate = format(new Date(date), "yyyy-MM-dd");
+      console.log(formatedDate, "f");
       const result = toDate(
         new Date(
           `${myDate.getFullYear()}-${myDate.getMonth() + 1}-${myDate.getDate()}`
         )
       );
-
-      console.log(result, "s");
+      console.log(result, "r");
       console.log(new Date(), "new");
 
       const isValidDate = await isValid(result);
       console.log(isValidDate, "V");
-
-      if (isValidDate) {
-        request.date = formattedDate;
+      if (isValidDate === true) {
+        request.date = formatedDate;
       } else {
         response.status(400);
         response.send("Invalid Due Date");
+        return;
       }
-    } catch (error) {
+    } catch (e) {
       response.status(400);
       response.send("Invalid Due Date");
+      return;
     }
   }
 
@@ -106,7 +106,10 @@ const checkRequestsQueries = async (request, response, next) => {
 };
 
 const checkRequestsBody = async (request, response, next) => {
-  const { search_q, category, priority, status, date } = request.body;
+  const { id, todo, category, priority, status, dueDate } = request.body;
+
+  console.log(id, todo, category, priority, status, dueDate);
+
   const { todoId } = request.params;
 
   if (category !== undefined) {
@@ -118,6 +121,7 @@ const checkRequestsBody = async (request, response, next) => {
     } else {
       response.status(400);
       response.send("Invalid todo Category");
+      return;
     }
   }
 
@@ -130,6 +134,7 @@ const checkRequestsBody = async (request, response, next) => {
     } else {
       response.status(400);
       response.send("Invalid todo Priority");
+      return;
     }
   }
 
@@ -142,42 +147,42 @@ const checkRequestsBody = async (request, response, next) => {
     } else {
       response.status(400);
       response.send("Invalid todo Status");
+      return;
     }
   }
 
-  if (date !== undefined) {
+  if (dueDate !== undefined) {
     try {
-      const myData = new Date(date);
+      const myData = new Date(dueDate);
 
-      const formattedDate = format(myData, "yyyy-MM-dd");
+      const formattedDate = format(new Date(dueDate), "yyyy-MM-dd");
       console.log(formattedDate, "f");
 
-      const result = toDate(
-        new Date(
-          `${myDate.getFullYear()}-${myDate.getMonth() + 1}-${myDate.getDate()}`
-        )
-      );
+      const result = toDate(new Date(formattedDate));
 
       console.log(result, "s");
       console.log(new Date(), "new");
 
-      const isValidDate = await isValid(result);
+      const isValidDate = isValid(result);
       console.log(isValidDate, "V");
 
       if (isValidDate) {
-        request.date = formattedDate;
+        request.dueDate = formattedDate;
       } else {
         response.status(400);
         response.send("Invalid Due Date");
+        return;
       }
     } catch (error) {
       response.status(400);
       response.send("Invalid Due Date");
+      return;
     }
   }
-
+  request.id = id;
   request.todoId = todoId;
-  request.search_q = search_q;
+  request.todo = todo;
+
   next();
 };
 
@@ -197,9 +202,61 @@ app.get("/todos/", checkRequestsQueries, async (request, response) => {
 
 //GET Todo API-2
 app.get("/todos/:todoId/", checkRequestsQueries, async (request, response) => {
-  const { todoId } = request;
+  const todoId = request.todoId;
 
   const getTodoQuery = `SELECT * FROM todo WHERE id='${todoId}'`;
   const todoDetails = await db.get(getTodoQuery);
   response.send(todoDetails);
 });
+
+//GET Todo with specific date API-3
+
+app.get("/agenda/", checkRequestsQueries, async (request, response) => {
+  const { date } = request;
+  console.log(date, "a");
+
+  const selectDuaDateQuery = `
+        SELECT
+            id,
+            todo,
+            priority,
+            status,
+            category,
+            due_date AS dueDate
+        FROM 
+            todo
+        WHERE 
+            due_date = '${date}'
+        ;`;
+
+  const todosArray = await db.all(selectDuaDateQuery);
+
+  if (todosArray === undefined) {
+    response.status(400);
+    response.send("Invalid Due Date");
+  } else if (todosArray.length < 1) {
+    response.send("No todos found with specific due date");
+  } else {
+    response.send(todosArray);
+  }
+});
+
+//Add todo API-4
+app.post("/todos/", checkRequestsBody, async (request, response) => {
+  const { id, todo, category, priority, status, dueDate } = request;
+
+  const postTodoQuery = `INSERT INTO 
+                            todo (id,todo,category,priority,status,due_date)
+                            values
+                            (
+                                '${id}','${todo}','${category}','${priority}','${status}','${dueDate}'
+                            )
+  
+  `;
+
+  const createdTodo = await db.run(postTodoQuery);
+  console.log(createdTodo, "todo created");
+  response.send("todo created successfully");
+});
+
+//
